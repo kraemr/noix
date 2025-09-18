@@ -1,0 +1,38 @@
+# Name used to track your version, no spaces!
+name = "noix_v1"
+# If this is used to "provision" a reproducible kernel + files -> true
+# Otherwise false
+bootable = false
+
+# if chroot should be immutable or not
+immutable = false
+
+# only if bootable is true
+# kernel_version=6.6.0
+# kernel_params=
+# kernel_modules=["i915"]
+
+# bind mounts (not copied over)
+# by default /etc/noix/ is mounted to enable changing to different stores
+# Also by fefault bind mounts are rw unless you add :ro at the end
+bind_mounts = [
+ "/proc",
+ "/mnt",
+ "/media",
+ "/dev",
+ "/boot",
+]
+
+# sync paths (copied into the store)
+sync_paths = [
+ "/usr",
+ "/bin",
+]
+
+# Just creates the given dir path
+# essentially runs mkdir -p
+create_dirs = [
+ "/tmp",
+]
+
+

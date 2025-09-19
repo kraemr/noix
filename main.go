@@ -290,7 +290,7 @@ func main(){
 		_,_ = toml.DecodeFile(os.Args[2],&config)
    		createChroot(config.Name)
 		makeSymLinks(config)
-		//copyPaths(config)
+		copyPaths(config)
 		bindMounts(config)
 
    }

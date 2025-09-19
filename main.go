@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/BurntSushi/toml"
+	"golang.org/x/sys/unix"
 )
 
 type (
@@ -40,7 +41,25 @@ func pathExists(path string) bool {
 }
 
 func bindMounts(conf tCONFIG){
+	chrootPath := buildRootPath(conf.Name);
+	for i:=0; i < len(conf.Bind_mounts);i++ {
+		dst := chrootPath + conf.Bind_mounts[i]
 
+
+    	if err := os.MkdirAll(dst, 0755); err != nil {
+        	log.Fatalf("failed to create target dir %s: %v", dst, err)
+    	}
+
+    	
+    	if err := unix.Mount(conf.Bind_mounts[i], dst, "", unix.MS_BIND, ""); err != nil {
+        	log.Fatalf("failed to bind mount %s -> %s: %v", conf.Bind_mounts[i], dst, err)
+    	}
+
+    	
+    	if err := unix.Mount("", dst, "", unix.MS_BIND|unix.MS_REMOUNT|unix.MS_RDONLY, ""); err != nil {
+        	log.Fatalf("failed to remount readonly %s: %v", dst, err)
+    	}
+	}	
 }
 
 func buildRootPath(name string) string{
@@ -263,35 +282,16 @@ func createChroot(name string) {
 
 
 func main(){
-   if len(os.Args) < 3 {
-	return
-   }
-   
-   if os.Args[1] == "build" || os.Args[1] == "-b" {
-	var config tCONFIG
-	_,_ = toml.DecodeFile(os.Args[2],&config)
-   	createChroot(config.Name)
-	makeSymLinks(config);
-	copyPaths(config)
-	//chroot_path := "/etc/noix/" + config.Name;	
-	
-	// path := "/lib64"
-	// for len(path) > 0 {
-	// 	path = recreateSymlink(chroot_path,path)
-	// }
-	// fmt.Println(path)
-	//copyPaths(config)
-	// realpath,_ := filepath.EvalSymlinks("/lib64");
-	// fmt.Println(realpath);
-
-	// paths, err := FilePathWalkDir(realpath);
-	// check(err)
-	// fmt.Println(paths);
-	
-
-	// realpath,_ = filepath.EvalSymlinks(paths[0]);
-	// fmt.Println(realpath);
-
+   	if len(os.Args) < 3 {
+		return
+   	}
+   	if os.Args[1] == "build" || os.Args[1] == "-b" {
+		var config tCONFIG
+		_,_ = toml.DecodeFile(os.Args[2],&config)
+   		createChroot(config.Name)
+		makeSymLinks(config)
+		//copyPaths(config)
+		bindMounts(config)
 
    }
 }

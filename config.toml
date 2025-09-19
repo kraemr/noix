@@ -25,8 +25,18 @@ bind_mounts = [
 
 # sync paths (copied into the store)
 sync_paths = [
- "/usr",
  "/bin",
+ "/bin/bash",
+ "/usr/lib/x86_64-linux-gnu/libtinfo.so.6.5",
+ "/lib/x86_64-linux-gnu/libtinfo.so.6",
+ "/lib/x86_64-linux-gnu/libc.so.6",
+ "/lib/x86_64-linux-gnu/libselinux.so.1",
+ "/lib/x86_64-linux-gnu/libcap.so.2",
+ "/lib/x86_64-linux-gnu/libpcre2-8.so.0",
+ "/lib/x86_64-linux-gnu/libselinux.so.1",
+ "/lib64",
+
+# "/home/rob/repos/noix/test2"
 ]
 
 # Just creates the given dir path

@@ -20,6 +20,7 @@ type (
 		Bind_mounts []string
 		Sync_paths []string
 		Create_dirs []string
+		Sym_links [][2]string
 	}
 )
 
@@ -38,10 +39,12 @@ func pathExists(path string) bool {
 	return fInfo != nil
 }
 
-
-
 func bindMounts(conf tCONFIG){
 
+}
+
+func buildRootPath(name string) string{
+	return "/etc/noix/" + name
 }
 
 func FilePathWalkDir(root string) ([]string, error) {
@@ -148,8 +151,7 @@ func copyFile(srcPath string, destPath string){
 }
 
 func copyPath(name string,paths []string) {
-	chroot_path := "/etc/noix/" + name;	
-	//fmt.Println(paths)
+	chroot_path := buildRootPath(name);	
 	for j :=0; j < len(paths); j++ {
 			srcPath := paths[j];
 			realpath,_ := filepath.EvalSymlinks(srcPath);
@@ -218,6 +220,14 @@ func activate(conf tCONFIG){
 
 }
 
+func makeSymLinks(conf tCONFIG){
+	chroot_path := buildRootPath(conf.Name);
+	for i:=0; i < len(conf.Sym_links); i++ {
+		os.Symlink(conf.Sym_links[i][1], chroot_path + "/" + conf.Sym_links[i][0]);
+	}
+
+}
+
 func hashFile(path string) ([]byte,error) {
   file, err := os.Open(path)
   if err != nil {
@@ -261,9 +271,7 @@ func main(){
 	var config tCONFIG
 	_,_ = toml.DecodeFile(os.Args[2],&config)
    	createChroot(config.Name)
-	
-	
-//	os.Symlink("/usr/bin","./test")
+	makeSymLinks(config);
 	copyPaths(config)
 	//chroot_path := "/etc/noix/" + config.Name;	
 	

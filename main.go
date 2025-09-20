@@ -261,7 +261,7 @@ func recursePaths(srcPath string, root string, recursion_level int) {
 	}
 
 	if isFile(srcPath) {
-		fmt.Println(srcPath, root+srcPath)
+		createDirsIfMissing(root + srcPath)
 		copyFile(srcPath, root+srcPath)
 	}
 
@@ -315,28 +315,6 @@ func makeSymLinks(conf tCONFIG) {
 
 }
 
-/*
-	func hashFile(path string) ([]byte, error) {
-		   file, err := os.Open(path)
-
-		   	if err != nil {
-		   		log.Fatal(err)
-		   		return nil, err
-		   	}
-
-		   defer file.Close()
-
-		   hash := sha256.New()
-
-		   	if err = copy(file, hash); err != nil {
-		   		log.Fatal(err)
-		   		return nil, err
-		   	}
-
-		   return hash.Sum(nil), nil
-
-}
-*/
 func createChroot(name string) {
 	if !pathExists("/etc/noix") {
 		err := os.MkdirAll("/etc/noix", os.ModePerm)

@@ -283,15 +283,39 @@ func createChroot(name string) {
 
 func main(){
    	if len(os.Args) < 3 {
+		copyExplanation := "copy copies all paths listed under sync_paths\n"
+		copyUsage := "$ noix copy config.toml\n"
+		bindExplanation := "bind creates mounts according to your config in bind_mounts\n"
+		bindMounts := "$ noix bind config.toml\n"
+		linkExplanation := "link creates symlinks as specified in sym_links\n"
+		makeSymLinks := "$ noix link config.toml\n"
+		fmt.Printf("%s%s%s%s%s%s",
+			copyExplanation,copyUsage,
+			bindExplanation,bindMounts,
+			linkExplanation,makeSymLinks,
+		);
 		return
    	}
-   	if os.Args[1] == "build" || os.Args[1] == "-b" {
-		var config tCONFIG
-		_,_ = toml.DecodeFile(os.Args[2],&config)
+	var config tCONFIG
+        _,_ = toml.DecodeFile(os.Args[2],&config)
+	if os.Args[1] == "build" || os.Args[1] == "-b" {
    		createChroot(config.Name)
 		makeSymLinks(config)
 		copyPaths(config)
 		bindMounts(config)
 
-   }
+        }
+	
+	if os.Args[1] == "copy" || os.Args[1] == "-c" {
+        	copyPaths(config)
+	}
+
+	if os.Args[1] == "bind" || os.Args[1] == "-bi" {
+		bindMounts(config)
+	}
+
+	if os.Args[1] == "link" || os.Args[1] == "-li" {
+		makeSymLinks(config)
+	}
+
 }

@@ -1,0 +1,34 @@
+# Name used to track your version, no spaces!
+name = "noix_test4123451"
+# If this is used to "provision" a reproducible kernel + files -> true
+# Otherwise false
+bootable = false
+# if chroot should be immutable or not
+immutable = false
+
+# only if bootable is true
+# kernel_version=6.6.0
+# kernel_params=
+# kernel_modules=["i915"]
+
+# bind mounts (not copied over)
+# by default /etc/noix/ is mounted to enable changing to different stores
+# Also by fefault bind mounts are rw unless you add :ro at the end
+# Mounting certain directories can mess up your system, beware!
+bind_mounts = [
+]
+
+sym_links = [
+]
+
+# sync paths (copied into the store)
+sync_paths = [ 
+    "/home/rob/noix/test",
+]
+
+# Just creates the given dir path
+# essentially runs mkdir -p
+create_dirs = [ 
+]
+
+

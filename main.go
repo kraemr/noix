@@ -1,7 +1,6 @@
 package main
 
 import (
-	"crypto/sha256"
 	"fmt"
 	"github.com/BurntSushi/toml"
 	"golang.org/x/sys/unix"
@@ -24,11 +23,12 @@ type (
 	}
 )
 
-var debug bool
+var debug bool = false
+var max_recursion int = 10
 
 func check(err error) {
 	if err != nil {
-		// fmt.Println("Error : %s", err.Error())
+		fmt.Println("Error : %s", err.Error())
 		//   os.Exit(1)
 	}
 }
@@ -152,14 +152,25 @@ func recreateSymlink(root string, path string, recursionLevel int) string {
 	return ""
 }
 
-func copy(src io.Reader, dest io.Writer) error {
+func copy(src *os.File, dest *os.File) error {
 	_, err := io.Copy(dest, src)
 	return err
 }
 
 func touch(path string, info os.FileInfo) (*os.File, error) {
-	destFile, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, info.Mode()) // creates if file doesn't exist
+	destFile, err := os.OpenFile(path,
+		os.O_CREATE|os.O_RDWR|os.O_TRUNC,
+		info.Mode())
+
 	return destFile, err
+}
+
+func isSymbolicLink(path string) bool {
+	fileInfo, err := os.Lstat(path)
+	if err != nil {
+		return false
+	}
+	return fileInfo.Mode()&os.ModeSymlink != 0
 }
 
 func copyFile(srcPath string, destPath string) {
@@ -182,7 +193,9 @@ func copyFile(srcPath string, destPath string) {
 	if err := os.Chmod(destPath, info.Mode()); err != nil {
 		check(err)
 	}
-	err = copy(destFile, srcFile) // check first var for number of bytes copied
+	written, err := io.Copy(destFile, srcFile)
+	fmt.Println(written)
+	//copy(srcFile, destFile) // check first var for number of bytes copied
 	check(err)
 	err = destFile.Sync()
 	check(err)
@@ -222,26 +235,66 @@ func copyPath(name string, paths []string) {
 	}
 }
 
-func copyPaths(conf tCONFIG) {
-	chroot_path := "/etc/noix/" + conf.Name
-	for i := 0; i < len(conf.Sync_paths); i++ {
-		fmt.Println(conf.Sync_paths[i])
-		link, err := os.Readlink(conf.Sync_paths[i])
-		srcPath := conf.Sync_paths[i]
-		if len(link) > 0 { // Output of os.Readlink is OS-dependent...
-			realpath, _ := filepath.EvalSymlinks(srcPath)
-			srcPath = realpath
-			if err != nil {
-				fmt.Println(err.Error())
-			}
-		}
-		recreateSymlink(chroot_path, conf.Sync_paths[i], 0)
-		paths, err := FilePathWalkDir(srcPath)
-		if err != nil {
-			check(err)
-		}
-		copyPath(conf.Name, paths)
+func recursePaths(srcPath string, root string, recursion_level int) {
+	if recursion_level >= 10 {
+		return
 	}
+
+	if isSymbolicLink(srcPath) {
+		link, err := os.Readlink(srcPath)
+		check(err)
+		fmt.Println(link)
+		err = os.Symlink(link, root+srcPath)
+		check(err)
+		return
+	}
+
+	if !isFile(srcPath) {
+		entries, _ := os.ReadDir(srcPath)
+		for i := 0; i < len(entries); i++ {
+			if entries[i].IsDir() {
+				os.MkdirAll(root+srcPath+"/"+entries[i].Name(), os.ModePerm)
+			}
+			recursePaths(srcPath+"/"+entries[i].Name(), root, recursion_level+1)
+		}
+
+	}
+
+	if isFile(srcPath) {
+		fmt.Println(srcPath, root+srcPath)
+		copyFile(srcPath, root+srcPath)
+	}
+
+}
+
+func syncPaths(conf tCONFIG) {
+	rootPath := buildRootPath(conf.Name)
+
+	for i := 0; i < len(conf.Sync_paths); i++ {
+		srcPath := conf.Sync_paths[i]
+		recursePaths(srcPath, rootPath, 0)
+	}
+
+	/*
+		chroot_path := "/etc/noix/" + conf.Name
+		for i := 0; i < len(conf.Sync_paths); i++ {
+			fmt.Println(conf.Sync_paths[i])
+			link, err := os.Readlink(conf.Sync_paths[i])
+			srcPath := conf.Sync_paths[i]
+			if len(link) > 0 { // Output of os.Readlink is OS-dependent...
+				realpath, _ := filepath.EvalSymlinks(srcPath)
+				srcPath = realpath
+				if err != nil {
+					fmt.Println(err.Error())
+				}
+			}
+			recreateSymlink(chroot_path, conf.Sync_paths[i], 0)
+			paths, err := FilePathWalkDir(srcPath)
+			if err != nil {
+				check(err)
+			}
+			copyPath(conf.Name, paths)
+		}*/
 }
 
 // switches to the root
@@ -262,22 +315,28 @@ func makeSymLinks(conf tCONFIG) {
 
 }
 
-func hashFile(path string) ([]byte, error) {
-	file, err := os.Open(path)
-	if err != nil {
-		log.Fatal(err)
-		return nil, err
-	}
-	defer file.Close()
+/*
+	func hashFile(path string) ([]byte, error) {
+		   file, err := os.Open(path)
 
-	hash := sha256.New()
-	if err = copy(file, hash); err != nil {
-		log.Fatal(err)
-		return nil, err
-	}
-	return hash.Sum(nil), nil
+		   	if err != nil {
+		   		log.Fatal(err)
+		   		return nil, err
+		   	}
+
+		   defer file.Close()
+
+		   hash := sha256.New()
+
+		   	if err = copy(file, hash); err != nil {
+		   		log.Fatal(err)
+		   		return nil, err
+		   	}
+
+		   return hash.Sum(nil), nil
+
 }
-
+*/
 func createChroot(name string) {
 	if !pathExists("/etc/noix") {
 		err := os.MkdirAll("/etc/noix", os.ModePerm)
@@ -317,12 +376,12 @@ func main() {
 	if os.Args[1] == "build" || os.Args[1] == "-b" {
 		createChroot(config.Name)
 		makeSymLinks(config)
-		copyPaths(config)
+		syncPaths(config)
 		bindMounts(config)
 
 	}
 	if os.Args[1] == "copy" || os.Args[1] == "-c" {
-		copyPaths(config)
+		syncPaths(config)
 	}
 
 	if os.Args[1] == "bind" || os.Args[1] == "-bi" {

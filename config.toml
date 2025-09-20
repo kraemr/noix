@@ -3,7 +3,6 @@ name = "noix_v1"
 # If this is used to "provision" a reproducible kernel + files -> true
 # Otherwise false
 bootable = false
-
 # if chroot should be immutable or not
 immutable = false
 
@@ -15,16 +14,14 @@ immutable = false
 # bind mounts (not copied over)
 # by default /etc/noix/ is mounted to enable changing to different stores
 # Also by fefault bind mounts are rw unless you add :ro at the end
+# Mounting certain directories can mess up your system, beware!
 bind_mounts = [
  "/proc",
- "/mnt",
- "/media",
- "/dev",
- "/boot",
 ]
 
 sym_links = [
     ["/lib","usr/lib"],
+    ["/bin","usr/bin"],
 ]
 
 # sync paths (copied into the store)

@@ -247,7 +247,11 @@ func recursePaths(srcPath string, root string, recursion_level int) {
 		createDirsIfMissing(root + srcPath)
 		err = os.Symlink(link, root+srcPath)
 		check(err)
-		return
+		realpath, err := filepath.EvalSymlinks(srcPath)
+		check(err)
+		if len(realpath) > 0 {
+			recursePaths(realpath, root, recursion_level+1)
+		}
 	}
 
 	if !isFile(srcPath) {

@@ -244,6 +244,7 @@ func recursePaths(srcPath string, root string, recursion_level int) {
 		link, err := os.Readlink(srcPath)
 		check(err)
 		fmt.Println(link)
+		createDirsIfMissing(root + srcPath)
 		err = os.Symlink(link, root+srcPath)
 		check(err)
 		return
@@ -261,7 +262,6 @@ func recursePaths(srcPath string, root string, recursion_level int) {
 	}
 
 	if isFile(srcPath) {
-		createDirsIfMissing(root + srcPath)
 		copyFile(srcPath, root+srcPath)
 	}
 

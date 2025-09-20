@@ -1,5 +1,6 @@
 # Name used to track your version, no spaces!
-name = "noix_v1"
+root = "/home/rob/"
+name = "noixtest3"
 # If this is used to "provision" a reproducible kernel + files -> true
 # Otherwise false
 bootable = false
@@ -26,8 +27,7 @@ sym_links = [
 
 # sync paths (copied into the store)
 sync_paths = [
- "/bin",
- "/bin/bash",
+ "/usr/bin/bash",
  "/usr/lib/x86_64-linux-gnu/libtinfo.so.6",
  "/lib/x86_64-linux-gnu/libc.so.6",
  "/lib/x86_64-linux-gnu/libselinux.so.1",
@@ -41,6 +41,7 @@ sync_paths = [
 # essentially runs mkdir -p
 create_dirs = [
  "/tmp",
+ ""
 ]
 
 

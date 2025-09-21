@@ -1,6 +1,6 @@
 # Name used to track your version, no spaces!
 root = "/home/rob/"
-name = "minimal_bash"
+name = "minimal_bash1"
 # If this is used to "provision" a reproducible kernel + files -> true
 # Otherwise false
 bootable = false

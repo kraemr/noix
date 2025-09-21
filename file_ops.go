@@ -85,9 +85,6 @@ func touch(path string, info os.FileInfo) (*os.File, error) {
 	destFile, err := os.OpenFile(path,
 		os.O_CREATE|os.O_RDWR|os.O_TRUNC,
 		info.Mode())
-
-	fmt.Println("touching ", path)
-
 	return destFile, err
 }
 
@@ -130,7 +127,28 @@ func recursePaths(srcPath string, root string, recursion_level int) {
 		return
 	}
 
-	if isSymbolicLink(srcPath) {
+	info, err := os.Lstat(srcPath)
+	if err != nil {
+		return
+	}
+	mode := info.Mode()
+
+	switch {
+	case mode.IsRegular():
+		fmt.Println("regular file")
+		createDirsIfMissing(root + srcPath)
+		copyFile(srcPath, root+srcPath)
+	case mode.IsDir():
+		fmt.Println("directory")
+		entries, _ := os.ReadDir(srcPath)
+		for i := range entries {
+			if entries[i].IsDir() {
+				os.MkdirAll(root+srcPath+"/"+entries[i].Name(), os.ModePerm)
+			}
+			recursePaths(srcPath+"/"+entries[i].Name(), root, recursion_level+1)
+		}
+	case mode&os.ModeSymlink != 0:
+		fmt.Println("symlink")
 		link, err := os.Readlink(srcPath)
 		check(err)
 		createDirsIfMissing(root + srcPath)
@@ -141,23 +159,18 @@ func recursePaths(srcPath string, root string, recursion_level int) {
 		if len(realpath) > 0 {
 			recursePaths(realpath, root, recursion_level+1)
 		}
-		return
-	}
-
-	if !IsFile(srcPath) {
-		entries, _ := os.ReadDir(srcPath)
-		for i := 0; i < len(entries); i++ {
-			if entries[i].IsDir() {
-				os.MkdirAll(root+srcPath+"/"+entries[i].Name(), os.ModePerm)
-			}
-			recursePaths(srcPath+"/"+entries[i].Name(), root, recursion_level+1)
+	case mode&os.ModeNamedPipe != 0:
+		fmt.Println("named pipe (FIFO)")
+	case mode&os.ModeSocket != 0:
+		fmt.Println("socket")
+	case mode&os.ModeDevice != 0:
+		if mode&os.ModeCharDevice != 0 {
+			fmt.Println("character device")
+		} else {
+			fmt.Println("block device")
 		}
-		return
-	}
-
-	if IsFile(srcPath) {
-		createDirsIfMissing(root + srcPath)
-		copyFile(srcPath, root+srcPath)
+	default:
+		fmt.Println("unknown/other")
 	}
 
 }

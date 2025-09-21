@@ -24,7 +24,6 @@ bind_mounts = [
 # essentially runs mkdir -p
 create_dirs = [
  "/tmp",
- ""
 ]
 
 sym_links = [

@@ -33,7 +33,6 @@ func rescursiveCreateArchive(files []string, tw *tar.Writer, recursion_level int
 		}
 
 		if !IsFile(file) {
-			fmt.Printf("recurse for: %s\n", file)
 			entries, err := os.ReadDir(file)
 			if err != nil {
 				fmt.Println(err.Error())
@@ -75,8 +74,6 @@ func addSymlinkToArchive(tw *tar.Writer, filename string) error {
 	if err != nil {
 		return err
 	}
-
-	fmt.Println(linkTarget)
 
 	// Create a tar header for the symlink
 	header, err := tar.FileInfoHeader(info, linkTarget)

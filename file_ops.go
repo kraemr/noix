@@ -55,21 +55,10 @@ func createSymLink(old string, new string) {
 	}
 }
 
-func FilePathWalkDir(root string) ([]string, error) {
-	var files []string
-	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
-		if !info.IsDir() {
-			files = append(files, path)
-		}
-		return nil
-	})
-	return files, err
-}
-
 func IsFile(path string) bool {
 	fi, err := os.Stat(path)
 	if err != nil {
-		fmt.Println(err)
+		//fmt.Println(err)
 		return false
 	}
 	return !fi.Mode().IsDir()
@@ -128,16 +117,13 @@ func copyFile(srcPath string, destPath string) {
 	if err := os.Chmod(destPath, info.Mode()); err != nil {
 		check(err)
 	}
-	written, err := io.Copy(destFile, srcFile)
-	fmt.Println(written)
-	//copy(srcFile, destFile) // check first var for number of bytes copied
+	_, err = io.Copy(destFile, srcFile)
 	check(err)
 	err = destFile.Sync()
 	check(err)
 }
 
 func recursePaths(srcPath string, root string, recursion_level int) {
-	fmt.Printf("recursePaths: %s %d\n", srcPath, recursion_level)
 	if recursion_level >= 4 {
 		return
 	}
@@ -145,7 +131,6 @@ func recursePaths(srcPath string, root string, recursion_level int) {
 	if isSymbolicLink(srcPath) {
 		link, err := os.Readlink(srcPath)
 		check(err)
-		fmt.Println(link)
 		createDirsIfMissing(root + srcPath)
 		err = os.Symlink(link, root+srcPath)
 		check(err)
@@ -154,6 +139,7 @@ func recursePaths(srcPath string, root string, recursion_level int) {
 		if len(realpath) > 0 {
 			recursePaths(realpath, root, recursion_level+1)
 		}
+		return
 	}
 
 	if !IsFile(srcPath) {
@@ -164,7 +150,7 @@ func recursePaths(srcPath string, root string, recursion_level int) {
 			}
 			recursePaths(srcPath+"/"+entries[i].Name(), root, recursion_level+1)
 		}
-
+		return
 	}
 
 	if IsFile(srcPath) {
@@ -187,7 +173,7 @@ func MakeSymLinks(conf tCONFIG) {
 
 	for i := 0; i < len(conf.Sym_links); i++ {
 		if debug != true {
-			fmt.Println("makeSymLink: ", conf.Sym_links[i][1], chroot_path+conf.Sym_links[i][0])
+			//fmt.Println("makeSymLink: ", conf.Sym_links[i][1], chroot_path+conf.Sym_links[i][0])
 			createSymLink(conf.Sym_links[i][1], chroot_path+conf.Sym_links[i][0])
 		} else {
 			fmt.Printf("makeSymLinks os.Symlink: old %s new %s \n", conf.Sym_links[i][1], chroot_path+"/"+conf.Sym_links[i][0])

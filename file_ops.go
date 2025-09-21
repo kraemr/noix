@@ -86,6 +86,8 @@ func touch(path string, info os.FileInfo) (*os.File, error) {
 		os.O_CREATE|os.O_RDWR|os.O_TRUNC,
 		info.Mode())
 
+	fmt.Println("touching ", path)
+
 	return destFile, err
 }
 

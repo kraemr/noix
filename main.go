@@ -52,7 +52,7 @@ func main() {
 	}
 
 	if len(os.Args) == 4 && os.Args[1] == "compress" {
-		out, err := os.Create(os.Args[4])
+		out, err := os.Create(os.Args[3])
 		if err != nil {
 			log.Fatalln("Error writing archive:", err)
 		}
@@ -60,6 +60,7 @@ func main() {
 		var f []string
 		f = append(f, os.Args[2])
 		CreateArchive(f, out)
+		os.Exit(0)
 	}
 
 	var config tCONFIG

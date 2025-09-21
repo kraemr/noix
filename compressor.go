@@ -14,9 +14,7 @@ func CreateArchive(files []string, buf io.Writer) {
 	defer gw.Close()
 	tw := tar.NewWriter(gw)
 	defer tw.Close()
-
 	rescursiveCreateArchive(files, tw, 0)
-
 }
 
 // shamelessly copied from https://www.arthurkoziel.com/writing-tar-gz-files-in-go/
@@ -24,31 +22,49 @@ func rescursiveCreateArchive(files []string, tw *tar.Writer, recursion_level int
 	if recursion_level > 4 {
 		return errors.New("rescursiveCreateArchive: Max Recursion Level Reached")
 	}
+
 	// Iterate over files and add them to the tar archive
 	for _, file := range files {
 
-		if isSymbolicLink(file) {
-			addSymlinkToArchive(tw, file)
-			continue
+		info, err := os.Lstat(file)
+		if err != nil {
+			return err
 		}
+		mode := info.Mode()
 
-		if !IsFile(file) {
+		switch {
+		case mode.IsRegular():
+			fmt.Println("regular file")
+			err := addToArchive(tw, file)
+			if err != nil {
+				return err
+			}
+		case mode.IsDir():
+			fmt.Println("directory")
 			entries, err := os.ReadDir(file)
 			if err != nil {
 				fmt.Println(err.Error())
 			}
 			var recurseFiles []string
-			for i := 0; i < len(entries); i++ {
+			for i := range entries {
 				recurseFiles = append(recurseFiles, file+"/"+entries[i].Name())
 			}
 			rescursiveCreateArchive(recurseFiles, tw, recursion_level+1)
-		} else {
-			err := addToArchive(tw, file)
-			if err != nil {
-				return err
+		case mode&os.ModeSymlink != 0:
+			addSymlinkToArchive(tw, file)
+		case mode&os.ModeNamedPipe != 0:
+			fmt.Println("named pipe (FIFO)")
+		case mode&os.ModeSocket != 0:
+			fmt.Println("socket")
+		case mode&os.ModeDevice != 0:
+			if mode&os.ModeCharDevice != 0 {
+				fmt.Println("character device")
+			} else {
+				fmt.Println("block device")
 			}
+		default:
+			fmt.Println("unknown/other")
 		}
-
 	}
 
 	return nil

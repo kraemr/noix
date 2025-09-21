@@ -47,7 +47,7 @@ func rescursiveCreateArchive(files []string, tw *tar.Writer, recursion_level int
 			}
 			var recurseFiles []string
 			for i := range entries {
-				recurseFiles = append(recurseFiles, file+"/"+entries[i].Name())
+				recurseFiles = append(recurseFiles, BuildPath(file, entries[i].Name()))
 			}
 			rescursiveCreateArchive(recurseFiles, tw, recursion_level+1)
 		case mode&os.ModeSymlink != 0:

@@ -88,6 +88,14 @@ func touch(path string, info os.FileInfo) (*os.File, error) {
 	return destFile, err
 }
 
+func BuildPath(dirPath string, name string) string {
+	if len(strings.Split(dirPath, "/")) == 1 {
+		return dirPath + name
+	} else {
+		return dirPath + "/" + name
+	}
+}
+
 func isSymbolicLink(path string) bool {
 	fileInfo, err := os.Lstat(path)
 	if err != nil {

@@ -1,0 +1,7 @@
+TODO:
+
+- Look at LXC and benchmark performance
+- Add Support for using .qcow and .qcow2 disk images to create a chroot
+- Add Support for using Docker images to create a chroot
+- if LXC performance wise is fine consider adding it 
+- Hook into early boot initramfs to boot from chroot

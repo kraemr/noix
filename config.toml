@@ -1,6 +1,6 @@
 # Name used to track your version, no spaces!
 root = "/home/rob/"
-name = "noixtest3"
+name = "minimal_bash"
 # If this is used to "provision" a reproducible kernel + files -> true
 # Otherwise false
 bootable = false
@@ -20,6 +20,13 @@ bind_mounts = [
  "/proc",
 ]
 
+# Just creates the given dir path
+# essentially runs mkdir -p
+create_dirs = [
+ "/tmp",
+ ""
+]
+
 sym_links = [
     ["/lib","usr/lib"],
     ["/bin","usr/bin"],
@@ -37,11 +44,10 @@ sync_paths = [
  "/lib64",
 ]
 
-# Just creates the given dir path
-# essentially runs mkdir -p
-create_dirs = [
- "/tmp",
- ""
-]
-
-
+# The process is like this: 
+# 1. createChroot(config)        
+# 2. createDirs(config)
+# 3. makeSymLinks(config)
+# 4. syncPaths(config)
+# 5. bindMounts(config)
+# Each of these can be executed seperately if you want a different order of operation

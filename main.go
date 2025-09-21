@@ -192,7 +192,6 @@ func recursePaths(srcPath string, root string, recursion_level int) {
 
 func syncPaths(conf tCONFIG) {
 	rootPath := buildRootPath(conf)
-
 	for i := 0; i < len(conf.Sync_paths); i++ {
 		srcPath := conf.Sync_paths[i]
 		recursePaths(srcPath, rootPath, 0)
@@ -246,6 +245,7 @@ func main() {
 	if len(os.Args) > 3 && os.Args[3] == "debug" {
 		debug = true
 	}
+
 	var config tCONFIG
 	_, _ = toml.DecodeFile(os.Args[2], &config)
 
@@ -256,7 +256,23 @@ func main() {
 		bindMounts(config)
 
 	}
-	if os.Args[1] == "copy" || os.Args[1] == "-c" {
+
+	if os.Args[1] == "compress" || os.Args[1] == "-co" {
+		files := []string{"/home/rob/minimal_bash"}
+		out, err := os.Create("output.tar.gz")
+		if err != nil {
+			log.Fatalln("Error writing archive:", err)
+		}
+		defer out.Close()
+		err = createArchive(files, out)
+		if err != nil {
+			log.Fatalln("Error creating archive:", err)
+		}
+
+		fmt.Println("Archive created successfully")
+	}
+
+	if os.Args[1] == "copy" || os.Args[1] == "-cp" {
 		syncPaths(config)
 	}
 

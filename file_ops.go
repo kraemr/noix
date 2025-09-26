@@ -64,6 +64,32 @@ func IsFile(path string) bool {
 	return !fi.Mode().IsDir()
 }
 
+func CreateDirs(config tCONFIG) {
+	for i := 0; i < len(config.Create_dirs); i++ {
+		dirName := config.Create_dirs[i]
+		err := os.Mkdir(dirName, 0755)
+		if err != nil {
+			if os.IsExist(err) {
+				fmt.Println("Directory already exists")
+			} else {
+				fmt.Println("Error creating directory:", err)
+			}
+			return
+		}
+
+		fmt.Println("Empty directory created:", dirName)
+	}
+}
+
+func GetWorkingDir() string {
+	ex, err := os.Executable()
+	if err != nil {
+		panic(err)
+	}
+	exPath := filepath.Dir(ex)
+	return exPath
+}
+
 func createDirsIfMissing(filePath string) {
 	if debug == true {
 		fmt.Printf("createDirsIfMissing: %s  \n", filePath)
@@ -94,14 +120,6 @@ func BuildPath(dirPath string, name string) string {
 	} else {
 		return dirPath + "/" + name
 	}
-}
-
-func isSymbolicLink(path string) bool {
-	fileInfo, err := os.Lstat(path)
-	if err != nil {
-		return false
-	}
-	return fileInfo.Mode()&os.ModeSymlink != 0
 }
 
 func copyFile(srcPath string, destPath string) {

@@ -51,6 +51,7 @@ func rescursiveCreateArchive(files []string, tw *tar.Writer, recursion_level int
 			}
 			rescursiveCreateArchive(recurseFiles, tw, recursion_level+1)
 		case mode&os.ModeSymlink != 0:
+			fmt.Println("symlink", file)
 			addSymlinkToArchive(tw, file)
 		case mode&os.ModeNamedPipe != 0:
 			fmt.Println("named pipe (FIFO)")
@@ -121,40 +122,6 @@ func addToArchive(tw *tar.Writer, filename string) error {
 	if err != nil {
 		return err
 	}
-
-	var link string = ""
-	if info.Mode()&os.ModeSymlink != 0 {
-		link, err = os.Readlink(filename)
-		if err != nil {
-			return err
-		}
-
-		// Create a tar Header from the FileInfo data
-		header, err := tar.FileInfoHeader(info, link)
-		if err != nil {
-			return err
-		}
-
-		// Use full path as name (FileInfoHeader only takes the basename)
-		// If we don't do this the directory strucuture would
-		// not be preserved
-		// https://golang.org/src/archive/tar/common.go?#L626
-		header.Name = filename
-		// Write file header to the tar archive
-		err = tw.WriteHeader(header)
-		if err != nil {
-			return err
-		}
-
-		// Copy file content to tar archive
-		_, err = io.Copy(tw, file)
-		if err != nil {
-			return err
-		}
-
-		return nil
-	}
-
 	// Create a tar Header from the FileInfo data
 	header, err := tar.FileInfoHeader(info, info.Name())
 	if err != nil {

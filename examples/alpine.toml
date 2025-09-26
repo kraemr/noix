@@ -1,5 +1,5 @@
 root = "/tmp/"
-name = "alpine_base_2"
+name = "alpine_base_3"
 
 base = [
 	"./alpine-minirootfs-3.22.1-x86_64.tar.gz"

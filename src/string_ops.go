@@ -7,7 +7,10 @@ func removeLeading(str string, cut string) string {
 }
 
 func removeTrailing(str string, cut string) string {
-	return strings.TrimRight(str, cut)
+	if strings.HasSuffix(str, cut) {
+		return str[:len(str)-len(cut)]
+	}
+	return str
 }
 
 func removeDuplicates(str string, dupe string, replace string) string {

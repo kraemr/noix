@@ -2,9 +2,7 @@ package main
 
 import (
 	"fmt"
-	"golang.org/x/sys/unix"
 	"io"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -24,60 +22,11 @@ func pathExists(path string) bool {
 	return fInfo != nil
 }
 
-func CreateOverlayFs(config tCONFIG, base string) error {
-	lowerDir := base
-	path := buildRootPath(config)
-	path = removeTrailing(path, "/lower")
-	upperDir := path + "/upper"
-	if err := os.MkdirAll(upperDir, 0755); err != nil {
-		log.Fatalf("failed to create target dir %s: %v", upperDir, err)
-	}
-
-	workDir := path + "/work"
-	if err := os.MkdirAll(workDir, 0755); err != nil {
-		log.Fatalf("failed to create target dir %s: %v", upperDir, err)
-	}
-
-	mergedDir := path + "/chroot"
-	if err := os.MkdirAll(mergedDir, 0755); err != nil {
-		log.Fatalf("failed to create target dir %s: %v", mergedDir, err)
-	}
-	options := fmt.Sprintf("lowerdir=%s,upperdir=%s,workdir=%s", lowerDir, upperDir, workDir)
-
-	fmt.Println(options)
-
-	if err := unix.Mount("overlay", mergedDir, "overlay", 0, options); err != nil {
-		log.Fatalf("failed to mount overlayFS: %v", err)
-		return err
-	}
-
-	return nil
-}
-
-func BindMounts(conf tCONFIG) {
-	chrootPath := buildRootPath(conf)
-	for i := 0; i < len(conf.Bind_mounts); i++ {
-		dst := chrootPath + conf.Bind_mounts[i]
-
-		if err := os.MkdirAll(dst, 0755); err != nil {
-			log.Fatalf("failed to create target dir %s: %v", dst, err)
-		}
-
-		if err := unix.Mount(conf.Bind_mounts[i], dst, "", unix.MS_BIND, ""); err != nil {
-			log.Fatalf("failed to bind mount %s -> %s: %v", conf.Bind_mounts[i], dst, err)
-		}
-
-		if err := unix.Mount("", dst, "", unix.MS_BIND|unix.MS_REMOUNT|unix.MS_RDONLY, ""); err != nil {
-			log.Fatalf("failed to remount readonly %s: %v", dst, err)
-		}
-	}
-}
-
 func buildRootPath(conf tCONFIG) string {
 	if conf.Use_Overlay {
 		return conf.Root + conf.Name + "/lower"
 	} else {
-		return conf.Root + conf.Name
+		return conf.Root + conf.Name + "/chroot"
 	}
 
 }
@@ -249,7 +198,6 @@ func MakeSymLinks(conf tCONFIG) {
 
 	for i := 0; i < len(conf.Sym_links); i++ {
 		if debug != true {
-			//fmt.Println("makeSymLink: ", conf.Sym_links[i][1], chroot_path+conf.Sym_links[i][0])
 			createSymLink(conf.Sym_links[i][1], chroot_path+conf.Sym_links[i][0])
 		} else {
 			fmt.Printf("makeSymLinks os.Symlink: old %s new %s \n", conf.Sym_links[i][1], chroot_path+"/"+conf.Sym_links[i][0])

@@ -1,10 +1,8 @@
 root = "/tmp/"
-name = "alpine1"
-
+name = "alpine1234"
 base = [
-	"./alpine-minirootfs-3.22.1-x86_64.tar.gz"
+    "./alpine-minirootfs-3.22.1-x86_64.tar.gz"
 ]
-
 # This is needed for networking
 sync_paths = [
     "/etc/resolv.conf"

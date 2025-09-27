@@ -24,6 +24,36 @@ func pathExists(path string) bool {
 	return fInfo != nil
 }
 
+func CreateOverlayFs(config tCONFIG, base string) error {
+	lowerDir := base
+	path := buildRootPath(config)
+	path = removeTrailing(path, "/lower")
+	upperDir := path + "/upper"
+	if err := os.MkdirAll(upperDir, 0755); err != nil {
+		log.Fatalf("failed to create target dir %s: %v", upperDir, err)
+	}
+
+	workDir := path + "/work"
+	if err := os.MkdirAll(workDir, 0755); err != nil {
+		log.Fatalf("failed to create target dir %s: %v", upperDir, err)
+	}
+
+	mergedDir := path + "/chroot"
+	if err := os.MkdirAll(mergedDir, 0755); err != nil {
+		log.Fatalf("failed to create target dir %s: %v", mergedDir, err)
+	}
+	options := fmt.Sprintf("lowerdir=%s,upperdir=%s,workdir=%s", lowerDir, upperDir, workDir)
+
+	fmt.Println(options)
+
+	if err := unix.Mount("overlay", mergedDir, "overlay", 0, options); err != nil {
+		log.Fatalf("failed to mount overlayFS: %v", err)
+		return err
+	}
+
+	return nil
+}
+
 func BindMounts(conf tCONFIG) {
 	chrootPath := buildRootPath(conf)
 	for i := 0; i < len(conf.Bind_mounts); i++ {
@@ -44,7 +74,12 @@ func BindMounts(conf tCONFIG) {
 }
 
 func buildRootPath(conf tCONFIG) string {
-	return conf.Root + conf.Name
+	if conf.Use_Overlay {
+		return conf.Root + conf.Name + "/lower"
+	} else {
+		return conf.Root + conf.Name
+	}
+
 }
 
 func createSymLink(old string, new string) {

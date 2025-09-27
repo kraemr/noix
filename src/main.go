@@ -21,6 +21,7 @@ type (
 		Include     []string
 		Is_loaded   bool
 		Base        []string
+		Use_Overlay bool
 	}
 )
 
@@ -35,14 +36,32 @@ func createChroot(config tCONFIG) {
 	}
 }
 
+// TODO write metadata to know how a chroot was built, when etc
+func writeBuildRecipe() {
+	fileName := "noix_recipe"
+	file, err := os.Create(fileName)
+	if err != nil {
+		fmt.Println("Error creating file:", err)
+		return
+	}
+	// Make sure to close the file at the end
+	defer file.Close()
+
+	for i := 0; i < len(os.Args); i++ {
+		_, err = file.WriteString(os.Args[i])
+		if err != nil {
+			fmt.Println("Error writing to file:", err)
+			return
+		}
+	}
+
+	fmt.Println("File written successfully!")
+}
+
 func handleBuild(config tCONFIG) {
 	createChroot(config)
 	if len(config.Base) > 0 {
 		for i := 0; i < len(config.Base); i++ {
-
-			str := GetWorkingDir()
-			fmt.Println(str)
-
 			err := untarGz(config.Base[i], buildRootPath(config))
 			if err != nil {
 				fmt.Println(err.Error())
@@ -52,6 +71,10 @@ func handleBuild(config tCONFIG) {
 	MakeSymLinks(config)
 	SyncPaths(config)
 	BindMounts(config)
+	if config.Use_Overlay {
+		CreateOverlayFs(config, buildRootPath(config))
+	}
+
 }
 
 func handleDecompress(config tCONFIG, out_archive_path *string) {
@@ -100,9 +123,18 @@ func handleActivate(config tCONFIG) {
 }
 
 func main() {
+
 	cmd := flag.String("c", "help", "Command to execute, available(build, compress, create, copy, bind, link)")
+	// Path to the config
 	config_path := flag.String("config", "", "Your Configuration File")
+	// path to the chroot or tar output
 	out_path := flag.String("o", "out.tar.gz", "Path to the new archive or chroot")
+	// override_name for the chroot (optional)
+	override_name := flag.String("override-name", "", "You can override the name of the image")
+	// when true an overlay_fs is created when a base image is used
+	// where the base image's will be in lower (readonly), saving on space as it is not copied into the chroot
+	// https://wiki.archlinux.org/title/Overlay_filesystem
+	use_overlay_fs := flag.Bool("overlay", false, "")
 	flag.Parse()
 
 	var config tCONFIG
@@ -115,6 +147,11 @@ func main() {
 		}
 	}
 	config.Is_loaded = true
+	config.Use_Overlay = *use_overlay_fs
+
+	if len(*override_name) != 0 {
+		config.Name = *override_name
+	}
 
 	switch *cmd {
 	case "build":

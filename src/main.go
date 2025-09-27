@@ -135,6 +135,11 @@ func main() {
 	// where the base image's will be in lower (readonly), saving on space as it is not copied into the chroot
 	// https://wiki.archlinux.org/title/Overlay_filesystem
 	use_overlay_fs := flag.Bool("overlay", false, "")
+	// Path to the created chroot to be chrooted
+	activate_path := flag.String("chroot", "", "Path of chroot to activate")
+	// When using this the uid and gid is dropped to 65534 (nobody) inside the chroot
+	drop_root := flag.Bool("drop-privs", false, "Drop uid and gid (rootless)")
+
 	flag.Parse()
 
 	var config tCONFIG
@@ -145,10 +150,9 @@ func main() {
 			fmt.Println("Error Decoding Path:", config_path)
 			os.Exit(1)
 		}
+		config.Is_loaded = true
 	}
-	config.Is_loaded = true
 	config.Use_Overlay = *use_overlay_fs
-
 	if len(*override_name) != 0 {
 		config.Name = *override_name
 	}
@@ -169,5 +173,7 @@ func main() {
 		handleBind(config)
 	case "link":
 		handleSymLink(config)
+	case "activate":
+		ActivateChroot(*activate_path, *drop_root)
 	}
 }

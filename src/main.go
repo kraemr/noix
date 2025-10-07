@@ -123,6 +123,9 @@ func handleActivate(config tCONFIG) {
 }
 
 func main() {
+	if len(os.Args) > 3 && os.Args[1] == "child" {
+		run(os.Args[2], os.Args[3])
+	}
 
 	cmd := flag.String("c", "help", "Command to execute, available(build, compress, create, copy, bind, link)")
 	// Path to the config
@@ -139,11 +142,9 @@ func main() {
 	activate_path := flag.String("chroot", "", "Path of chroot to activate")
 	// When using this the uid and gid is dropped to 65534 (nobody) inside the chroot
 	drop_root := flag.Bool("drop-privs", false, "Drop uid and gid (rootless)")
-
+	custom_exec := flag.String("exec", "/bin/sh", "Path of program to exec in container")
 	flag.Parse()
-
 	var config tCONFIG
-
 	if len(*config_path) != 0 {
 		_, err := toml.DecodeFile(*config_path, &config)
 		if err != nil {
@@ -175,5 +176,7 @@ func main() {
 		handleSymLink(config)
 	case "activate":
 		ActivateChroot(*activate_path, *drop_root)
+	case "run":
+		run(*activate_path, *custom_exec)
 	}
 }

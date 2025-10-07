@@ -11,6 +11,18 @@ This functions similiarly to docker, but with less complexity
 # What is this for?
 With noix you can create reproducible chroot environments to function as dev environments or for shipping kernel with specific patches params etc.
 
+
+
+# Quick Example
+
+```bash
+# 1. Copies files to "container" binds mounts, creates symlinks etc
+./noix -c=build -config=examples/alpine.toml
+# 2. Run a program in the "container"
+./noix -c=run -chroot=/tmp/alpine/1234 -exec=sh
+```
+
+
 # Why use this instead of Docker,Nix or other "reproducibility programs"
 
 This approach has an almost non-existant performance impact and gives you the user the maximum amount of control. 
@@ -25,35 +37,17 @@ Docker also hogs all your ressources, since every dockerbuild is self contained 
 
 If you like you can do the same with this software.
 However it is more intended to supply the minimum amount required for a certain application or usecase
-For example this config makes bash run in a chroot
+For example this config makes dash run in a chroot with networking
 
 ```toml
-root = "/etc/noix/"
-name = "minimal_bash"
-bootable = false
-immutable = false
-
-bind_mounts = [
- "/proc",
+root = "/tmp/"
+name = "alpine1234"
+base = [
+    "./alpine-minirootfs-3.22.1-x86_64.tar.gz"
 ]
-
-create_dirs = [
- "/tmp",
-]
-
-sym_links = [
-    ["/lib","usr/lib"],
-    ["/bin","usr/bin"],
-]
-
+# This is needed for networking
 sync_paths = [
- "/usr/bin/bash",
- "/usr/lib/x86_64-linux-gnu/libtinfo.so.6",
- "/lib/x86_64-linux-gnu/libc.so.6",
- "/lib/x86_64-linux-gnu/libselinux.so.1",
- "/lib/x86_64-linux-gnu/libcap.so.2",
- "/lib/x86_64-linux-gnu/libpcre2-8.so.0",
- "/lib/x86_64-linux-gnu/libselinux.so.1",
- "/lib64",
+    "/etc/resolv.conf"
 ]
+
 ```

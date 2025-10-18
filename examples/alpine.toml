@@ -7,3 +7,4 @@ base = [
 sync_paths = [
     "/etc/resolv.conf"
 ]
+

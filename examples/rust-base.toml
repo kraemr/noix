@@ -1,0 +1,10 @@
+root = "/tmp/"
+name = "rust-alpine"
+
+base =  [
+"./rust-base.tar.gz"
+]
+
+sync_paths = [
+    "/etc/resolv.conf"
+]
